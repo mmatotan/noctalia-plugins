@@ -9,7 +9,8 @@
     "connectionError": "Ошибка подключения к {name}",
     "disconnectionError": "Ошибка отключения от {name}",
     "vpnRemoved": "VPN \"{name}\" удалён",
-    "vpnRemoveError": "Ошибка удаления VPN \"{name}\""
+    "vpnRemoveError": "Ошибка удаления VPN \"{name}\"",
+    "passwordWriteError": "Ошибка записи пароля для {name}"
   },
   "settings": {
     "pluginSettings": "Настройка плагина",
@@ -35,6 +36,16 @@
     "settings": "Настройки",
     "edit": "Редактировать",
     "delete": "Удалить",
+    "cancel": "Отмена"
+  },
+  "prompt": {
+    "enterPassword": "Введите пароль для {name}"
+  },
+  "passwordPrompt": {
+    "title": "Введите пароль",
+    "subtitle": "Введите пароль VPN для продолжения",
+    "password": "Пароль",
+    "enter": "Ввести",
     "cancel": "Отмена"
   }
 }

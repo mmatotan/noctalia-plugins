@@ -17,6 +17,12 @@ QtObject {
     readonly property bool isLoading: Object.keys(root._pending).length > 0
 
     property var _pending: ({})
+    
+    // Password prompt state
+    property string _passwordConnectionName: ""
+    property string _passwordConnectionUuid: ""
+    property var _passwordProc: Process {}
+    property bool _passwordProcRunning: false
 
     // Needed only to detect disconnection not initiated by the user
     property var _pollTimer: Timer {
@@ -79,15 +85,24 @@ QtObject {
     property var _connectProc: Process {
         property string targetName: ""
         property string targetUuid: ""
-        command: ["nmcli", "connection", "up", "uuid", targetUuid]
+        property string targetPasswordFile: ""
+        command: ["nmcli", "connection", "up", "uuid", targetUuid, "--ask-password-file", targetPasswordFile]
         onExited: (exitCode) => {
-            if (exitCode === 0)
+            // Exit code 128 means nmcli failed (likely needs password)
+            if (exitCode === 128) {
+                root._passwordConnectionName = targetName
+                root._passwordConnectionUuid = targetUuid
+                root._passwordProcRunning = false
+                root.showPasswordPrompt()
+            } else if (exitCode === 0) {
                 toast?.showNotice(t("toast.connectedTo", { name: targetName }))
-            else {
+                root.stopLoading(targetUuid)
+                root.refresh()
+            } else {
                 root.stopLoading(targetUuid)
                 toast?.showError(t("toast.connectionError", { name: targetName }))
+                root.refresh()
             }
-            root.refresh()
         }
     }
 
@@ -144,6 +159,48 @@ QtObject {
             return null;
 
         return pluginApi.tr(key, data);
+    }
+
+    // Password prompt functions
+    function showPasswordPrompt() {
+        root._passwordConnectionName = _connectProc.targetName
+        root._passwordConnectionUuid = _connectProc.targetUuid
+        root._passwordProcRunning = false
+        root.passwordPrompt?.open()
+    }
+
+    function handlePasswordPrompt() {
+        if (root._passwordProcRunning) {
+            return
+        }
+        root._passwordProcRunning = true
+        const connectionName = root._passwordConnectionName
+        const connectionUuid = root._passwordConnectionUuid
+        const password = root.passwordPrompt?.input?.text || ""
+
+        // Create temporary password file
+        const timestamp = Date.now()
+        const passwordFile = "/tmp/nmcli-password-" + timestamp + ".txt"
+        root._connectProc.targetPasswordFile = passwordFile
+
+        // Write password to file
+        const writeProc = Process {
+            command: ["sh", "-c", "echo -n '" + password + "' > '" + passwordFile + "'"]
+            onExited: (exitCode) => {
+                if (exitCode === 0) {
+                    // Start nmcli with password file
+                    root._connectProc.start()
+                } else {
+                    // Failed to write password, close prompt and show error
+                    root.passwordPrompt?.close()
+                    toast?.showError(t("toast.passwordWriteError", { name: connectionName }))
+                    root._passwordProcRunning = false
+                    root._passwordConnectionName = ""
+                    root._passwordConnectionUuid = ""
+                }
+            }
+        }
+        writeProc.running = true
     }
 
     function refresh() {
@@ -227,5 +284,72 @@ QtObject {
 
     Component.onCompleted: {
         Logger.i("NetworkManagerVPN", "Started")
+    }
+
+    // Password prompt dialog
+    NPopup {
+        id: passwordPrompt
+        modal: true
+        property string input: ""
+        property bool opened: false
+        anchors.centerIn: parent
+        width: 400 * Style.uiScaleRatio
+        height: 200 * Style.uiScaleRatio
+        visible: opened
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: Style.marginL
+            spacing: Style.marginS
+
+            NLabel {
+                Layout.fillWidth: true
+                text: t("passwordPrompt.title") || "Enter Password"
+                font.bold: true
+                font.size: Style.fontSizeM
+            }
+
+            NLabel {
+                Layout.fillWidth: true
+                text: t("passwordPrompt.subtitle") || "Enter your VPN password to continue"
+                font.size: Style.fontSizeS
+                color: Color.fGray
+            }
+
+            NTextInput {
+                Layout.fillWidth: true
+                label: t("passwordPrompt.password") || "Password"
+                password: true
+                onTextChanged: passwordPrompt.input = text
+            }
+
+            NBox {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Style.buttonHeight
+                Layout.alignment: Qt.AlignHCenter
+                spacing: Style.marginXS
+
+                NButton {
+                    Layout.preferredWidth: 100 * Style.uiScaleRatio
+                    text: t("passwordPrompt.cancel") || "Cancel"
+                    onClicked: {
+                        passwordPrompt.close()
+                        root._passwordProcRunning = false
+                        root._passwordConnectionName = ""
+                        root._passwordConnectionUuid = ""
+                    }
+                }
+
+                NButton {
+                    Layout.preferredWidth: 120 * Style.uiScaleRatio
+                    text: t("passwordPrompt.enter") || "Enter"
+                    onClicked: {
+                        if (passwordPrompt.input) {
+                            root.handlePasswordPrompt()
+                        }
+                    }
+                }
+            }
+        }
     }
 }

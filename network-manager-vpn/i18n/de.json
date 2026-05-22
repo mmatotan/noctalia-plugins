@@ -9,7 +9,8 @@
     "connectionError": "Verbindungsaufbau mit {name} fehlgeschlagen",
     "disconnectionError": "Die Trennung von {name} ist fehlgeschlagen",
     "vpnRemoved": "VPN \"{name}\" wurde entfernt",
-    "vpnRemoveError": "Der VPN \"{name}\" konnte nicht entfernt werden"
+    "vpnRemoveError": "Der VPN \"{name}\" konnte nicht entfernt werden",
+    "passwordWriteError": "Fehler beim Schreiben des Passworts für {name}"
   },
   "settings": {
     "pluginSettings": "Plugin Einstellungen",
@@ -35,6 +36,16 @@
     "settings": "Einstellungen",
     "edit": "Bearbeiten",
     "delete": "Löschen",
+    "cancel": "Abbrechen"
+  },
+  "prompt": {
+    "enterPassword": "Passwort für {name} eingeben"
+  },
+  "passwordPrompt": {
+    "title": "Passwort eingeben",
+    "subtitle": "Geben Sie Ihr VPN-Passwort ein, um fortzufahren",
+    "password": "Passwort",
+    "enter": "Eintragen",
     "cancel": "Abbrechen"
   }
 }

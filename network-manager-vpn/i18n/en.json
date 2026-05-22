@@ -9,7 +9,8 @@
     "connectionError": "Failed to connect {name}",
     "disconnectionError": "Failed to disconnect {name}",
     "vpnRemoved": "VPN \"{name}\" removed",
-    "vpnRemoveError": "Failed to remove VPN \"{name}\""
+    "vpnRemoveError": "Failed to remove VPN \"{name}\"",
+    "passwordWriteError": "Failed to write password for {name}"
   },
   "settings": {
     "pluginSettings": "Plugin settings",
@@ -35,6 +36,16 @@
     "settings": "Settings",
     "edit": "Edit",
     "delete": "Delete",
+    "cancel": "Cancel"
+  },
+  "prompt": {
+    "enterPassword": "Enter password for {name}"
+  },
+  "passwordPrompt": {
+    "title": "Enter Password",
+    "subtitle": "Enter your VPN password to continue",
+    "password": "Password",
+    "enter": "Enter",
     "cancel": "Cancel"
   }
 }
